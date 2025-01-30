@@ -1,0 +1,119 @@
+managed;
+strict;
+
+define behavior for ZR_GateEntryHeader alias GateEntryHeader
+implementation in class zbp_r_gateentryheader unique
+persistent table zgateentryheader
+lock master
+early numbering
+authorization master ( global, instance )
+etag master LastChangedAt
+{
+  field ( readonly )
+   CreatedBy,
+   CreatedAt,
+   LastChangedAt,
+   LastChangedBy,
+   Totallines;
+
+  field ( readonly )
+   Gateentryno;
+
+  field ( mandatory ) Entrytype, Vehicleno, Drivername, Invoiceno, Invoicedate;
+
+  action( features : instance ) cancelGateEntry    result [1] $self;
+  action cancelMultiple;
+  determination changeValues on modify { field Entrytype; }
+  validation validateMandatory on save { field Vehicleno, Plant, Entrytype; create; update;}
+  internal action ReCalcTotals;
+
+  create ( precheck );
+  update ( precheck );
+  delete;
+
+  mapping for zgateentryheader
+  {
+    Gateentryno = GATEENTRYNO;
+    Entrydate = ENTRYDATE;
+    Plant = PLANT;
+    Gateoutward = GATEOUTWARD;
+    Entrytype = ENTRYTYPE;
+    Operatorname = OPERATORNAME;
+    Transportmode = TRANSPORTMODE;
+    Grdate = GRDATE;
+    Grno = GRNO;
+    Vehicleno = VEHICLENO;
+    Gateindate = GATEINDATE;
+    Gateintime = GATEINTIME;
+    Transportername = TRANSPORTERNAME;
+    Drivername = DRIVERNAME;
+    Driverlicenseno = DRIVERLICENSENO;
+    Driverno = DRIVERNO;
+    Gateoutdate = GATEOUTDATE;
+    Gateouttime = GATEOUTTIME;
+    Remarks = REMARKS;
+    Grosswt = GROSSWT;
+    Tarewt = TAREWT;
+    Netwt = NETWT;
+    Slipno = SLIPNO;
+    Cancelled = CANCELLED;
+    Invoiceno = INVOICENO;
+    Invoicedate = INVOICEDATE;
+    CreatedBy = CREATED_BY;
+    CreatedAt = CREATED_AT;
+    LastChangedBy = LAST_CHANGED_BY;
+    LastChangedAt = LAST_CHANGED_AT;
+    LocalLastChangedAt = LOCAL_LAST_CHANGED_AT;
+  }
+
+  association _GateEntryLines { create; }
+}
+
+define behavior for ZR_GateEntryLines alias GateEntryLines
+implementation in class zbp_r_gateentrylines unique
+persistent table zgateentrylines
+early numbering
+lock dependent by _GateEntryHeader
+authorization dependent by _GateEntryHeader
+//etag master <field_name>
+{
+  update;
+  delete;
+  field ( readonly ) Gateentryno, Gateitemno;
+
+  field ( readonly : update )
+  Productcode;
+
+  determination updateLines on save { field Vendorcode; }
+
+  determination calculateTotals on modify { field Gateqty; }
+
+  side effects
+  {
+    field Gateqty affects field _GateEntryHeader.Totallines;
+//    action Apply_Discount affects field _Travel.TotalPrice ;
+  }
+
+  mapping for zgateentrylines
+  {
+    Gateentryno = GATEENTRYNO;
+    Gateitemno = GATEITEMNO;
+    Vendorcode = VENDORCODE;
+    Vendorname = VENDORNAME;
+    Customercode = CUSTOMERCODE;
+    Customername = CUSTOMERNAME;
+    Productcode = PRODUCTCODE;
+    Productdesc = PRODUCTDESC;
+    Entrytype = ENTRYTYPE;
+    Documentno = DOCUMENTNO;
+    Documentitem = DOCUMENTITEM;
+    Documentqty = DOCUMENTQTY;
+    Uom = UOM;
+    Gateqty = GATEQTY;
+    Gatevalue = GATEVALUE;
+    Remarks = REMARKS;
+
+  }
+
+  association _GateEntryHeader;
+}
